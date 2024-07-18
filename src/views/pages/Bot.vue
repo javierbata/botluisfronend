@@ -1,39 +1,31 @@
 <script setup>
-import { FilterMatchMode } from 'primevue/api';
-import { ref, onMounted, onBeforeMount } from 'vue';
+import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { useToast } from 'primevue/usetoast';
-import { Buffer } from 'buffer';
-
 import axios from 'axios';
-import config from '../config.js';
-const toast = useToast();
-
-
 
 const qrCode = ref(null);
 const status = ref(null);
+const toast = useToast();
 
-let ws;
+const getStatus = async () => {
+  try {
+    const response = await axios.get('http://localhost:5000/status');
+    status.value = response.data.status;
+  } catch (error) {
+    console.error('Error getting status:', error);
+    toast.add({ severity: 'error', summary: 'Error', detail: error.response?.data?.message || 'Error getting status' });
+  }
+};
 
-const connectWebSocket = () => {
-  ws = new WebSocket('ws://localhost:5000/ws');
-
-  ws.onmessage = (event) => {
-    const message = JSON.parse(event.data);
-    if (message.type === 'qr') {
-      qrCode.value = message.data;
-    } else if (message.type === 'status') {
-      status.value = message.data;
-      if (status.value !== 'authenticated') {
-        qrCode.value = null; // Clear QR code if not authenticated
-      }
-    }
-  };
-
-  ws.onerror = (error) => {
-    console.error('WebSocket error:', error);
-    toast.add({ severity: 'error', summary: 'WebSocket Error', detail: error.message });
-  };
+const getQRCode = async () => {
+  try {
+    const response = await axios.get('http://localhost:5000/qr');
+    qrCode.value = response.data.qrCode;
+    console.log(qrCode.value)
+  } catch (error) {
+    console.error('Error getting QR code:', error);
+    toast.add({ severity: 'error', summary: 'Error', detail: error.response?.data?.message || 'Error getting QR code' });
+  }
 };
 
 const disconnect = async () => {
@@ -50,6 +42,7 @@ const reinitialize = async () => {
   try {
     const response = await axios.post('http://localhost:5000/reinitialize');
     toast.add({ severity: 'success', summary: 'Reinitialized', detail: response.data.message });
+    getQRCode(); // Get the new QR code after reinitialization
   } catch (error) {
     console.error('Error reinitializing:', error);
     toast.add({ severity: 'error', summary: 'Error', detail: error.response?.data?.message || 'Error reinitializing' });
@@ -57,13 +50,12 @@ const reinitialize = async () => {
 };
 
 onMounted(() => {
-  connectWebSocket();
+  getStatus();
+  getQRCode();
 });
 
-onBeforeMount(() => {
-  if (ws) {
-    ws.close();
-  }
+onBeforeUnmount(() => {
+  // No WebSocket to close
 });
 
 
@@ -77,9 +69,7 @@ onBeforeMount(() => {
     <div v-else-if="status === 'auth_failure'">
       <p>Authentication failed. Please try again.</p>
     </div>
-    <div v-else-if="status === 'disconnected'">
-      <p>Client was disconnected. Please scan the QR code again.</p>
-    </div>
+
     <div v-else-if="qrCode">
       <img :src="qrCode" alt="QR Code" />
     </div>
@@ -88,7 +78,7 @@ onBeforeMount(() => {
     </div>
     <div class="buttons">
       <button @click="disconnect">Disconnect</button>
-      <button @click="reinitialize">Generate New QR</button>
+      <button @click="getQRCode">Generate New QR</button>
     </div>
   </div>
 </template>
