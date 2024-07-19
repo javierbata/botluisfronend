@@ -2,6 +2,7 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import axios from 'axios';
+import config from '../config.js';
 
 const qrCode = ref(null);
 const status = ref(null);
@@ -9,7 +10,7 @@ const toast = useToast();
 
 const getStatus = async () => {
   try {
-    const response = await axios.get('http://localhost:5000/status');
+    const response = await axios.get(config.URLBACKEND+'/status');
     status.value = response.data.status;
   } catch (error) {
     console.error('Error getting status:', error);
@@ -19,7 +20,9 @@ const getStatus = async () => {
 
 const getQRCode = async () => {
   try {
-    const response = await axios.get('http://localhost:5000/qr');
+    getStatus();
+    const response = await axios.get(config.URLBACKEND+'/qr');
+  
     qrCode.value = response.data.qrCode;
     console.log(qrCode.value)
   } catch (error) {
@@ -30,7 +33,7 @@ const getQRCode = async () => {
 
 const disconnect = async () => {
   try {
-    const response = await axios.post('http://localhost:5000/disconnect');
+    const response = await axios.post(config.URLBACKEND+'/disconnect');
     toast.add({ severity: 'success', summary: 'Disconnected', detail: response.data.message });
   } catch (error) {
     console.error('Error disconnecting:', error);
@@ -40,7 +43,7 @@ const disconnect = async () => {
 
 const reinitialize = async () => {
   try {
-    const response = await axios.post('http://localhost:5000/reinitialize');
+    const response = await axios.post(config.URLBACKEND+'/reinitialize');
     toast.add({ severity: 'success', summary: 'Reinitialized', detail: response.data.message });
     getQRCode(); // Get the new QR code after reinitialization
   } catch (error) {

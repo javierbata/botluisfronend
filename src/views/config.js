@@ -1,4 +1,4 @@
-const BACKENDNUBE =  "https://jaenvioswebbackend.azurewebsites.net"
+const BACKENDNUBE =  "https://api-remesas-lc.azurewebsites.net"
 const BACKENDLOCAL =  "http://localhost:5000"
 
 
