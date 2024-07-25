@@ -4,6 +4,6 @@ const BACKENDLOCAL =  "http://localhost:5000"
 
 export default {
 
-  URLBACKEND: BACKENDNUBE
+  URLBACKEND: BACKENDLOCAL
 
 };
